@@ -1,10 +1,360 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>你好，GitHub</title>
+    <title>KDAnalyzer</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
+    <style type="text/css">
+    div#db_tbl_area {
+        width: 600px;
+    }
+    canvas {
+        width:780px !important;
+        height:300px !important;
+    }
+    </style>
   </head>
-  <body>
-    <h1>覺得厲害</h1>
+  <body onload='init()'>
+    <button onclick='save()' id='save_btn' disabled="disabled">儲存資料</button>
+    <input type="file" id='load_btn' onchange="read_files(event)"></input>
+    <hr>
+    股票代號：<input type='text' id='stock_id' value='2317' size='6'></input>
+    <button onclick='get_stock_data()'>抓取歷史資料 (2015/01/01 - now)</button>
+    <p id='loading'></p>
+    <hr>
+    <div id='db_tbl_area'>
+        <table id='db_tbl' class='display' width='100%'></table>
+    </div>
+    <hr>
+    <canvas id='stock_line_chart'></canvas>
   </body>
+  <script>
+    //
+    // all kinds of variables
+    // 
+    var query_dates = [];
+    var query_index = 0;
+    var query_stock_id = 0;
+    var db = {};
+    var line_chart;
+    var line_chart_data = {
+        labels: [],
+        datasets: [{
+            label: '',
+            backgroundColor: '#2626FF',
+            borderColor: '#2626FF',
+            borderWidth: 1.5,
+            pointRadius: 1.5,
+            lineTension: 0,
+            fill: false,
+            data: [],
+            yAxisID: 'price',
+        },
+        {
+            label: 'K9',
+            backgroundColor: '#00C400',
+            borderColor: '#00C400',
+            borderWidth: 1,
+            pointRadius: 0,
+            lineTension: 0,
+            fill: false,
+            data: [],
+            yAxisID: 'KD',
+        },
+        {
+            label: 'D9',
+            backgroundColor: '#DB00DB',
+            borderColor: '#DB00DB',
+            borderWidth: 1,
+            pointRadius: 0,
+            lineTension: 0,
+            fill: false,
+            data: [],
+            yAxisID: 'KD',
+        }]
+    };
+
+    var line_chart_conf = {
+        type: 'line',
+        data: line_chart_data,
+        options: {
+            title: {
+                display: true
+            },
+            scales: {
+                xAxes : [ {
+                    gridLines : {
+                        display : false
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    position: 'left',
+                    id: 'price',
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 0,
+                    },
+                    gridLines: {
+                        display:false
+                    } 
+                },
+                {
+                    display: true,
+                    position: 'right',
+                    id: 'KD',
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                    },
+                    gridLines: {
+                        display:true
+                    } 
+                }],
+            }
+        }
+    };
+
+    var gen_db_tbl = function() {
+        $('#db_tbl').DataTable().clear();
+
+        var data_set = [];
+
+        var count = 1;
+        for (var stock_id in db) {
+            var item = [];
+            item.push(count++);
+            item.push(stock_id);
+            item.push(db[stock_id].name);
+            item.push('<input type="text" id="' + stock_id + '_days" size="3" value="1">日</input>');
+            item.push('<button class="analyze">分析</button>');
+            item.push('<button class="delete">刪除</button>');
+            data_set.push(item);
+        }
+
+        $('#db_tbl').DataTable().clear();
+        $('#db_tbl').DataTable().rows.add(data_set  );
+        $('#db_tbl').DataTable().draw();
+    }
+
+    var trigger = function() {
+        if (query_index < query_dates.length) {
+            $('#loading').text('載入資料中 (' + (query_index + 1) + '/'
+            + (query_dates.length) + ') ...');
+            setTimeout(trigger_to_get_stock_price, 400);
+        }
+        else {
+            $('#loading').text('股票歷史資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');
+            $('#save_btn').attr('disabled', false);
+            gen_db_tbl();
+        }
+    }
+
+    var trigger_to_get_stock_price = function() {
+        var date_item = query_dates[query_index];
+        var twse_url = 'http://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_';
+        twse_url += query_stock_id + '.tw_' + date_item + '&json=1&delay=0';
+        console.log(twse_url);
+        $.get(twse_url, function(result){
+            var obj = JSON.parse(result);
+            //ref: https://sites.google.com/site/kentyeh2000/zheng-jiao-suo-ji-shi-zi-xun-jie-xi
+            if (obj.msgArray.length > 0) {
+                var key = obj.msgArray[0].c;
+                if (db[key] === undefined){
+                    var d = {};
+                    d.data = [];
+                    d.name = obj.msgArray[0].n;
+
+                    db[key] = d;
+                }
+
+                db[key].data.push({
+                    date: date_item,
+                    price: obj.msgArray[0].y
+                });
+            }
+
+            query_index++;          
+            trigger();
+        });
+    }
+
+    Date.prototype.format = function() {
+        var s = '';
+        var mouth = (this.getMonth() + 1) >= 10 ? (this.getMonth() + 1) : ('0'+(this.getMonth() + 1));
+        var day = this.getDate() >= 10 ? this.getDate() : ('0'+this.getDate());
+        s += this.getFullYear() + mouth + day;
+        return (s);
+    };
+
+    var get_all_single_dates = function(stock_id, begin, end) {
+        var ab = begin.split("-");
+        var ae = end.split("-");
+        var db = new Date();
+        db.setUTCFullYear(ab[0], ab[1] - 1, ab[2]);
+        var de = new Date();
+        de.setUTCFullYear(ae[0], ae[1] - 1, ae[2]);
+        var unixDb = db.getTime();
+        var unixDe = de.getTime();
+        var urls = [];
+        for (var k = unixDb; k <= unixDe;) {
+            var date_item = (new Date(parseInt(k))).format();
+            urls.push((new Date(parseInt(k))).format());
+            k = k + 24 * 60 * 60 * 1000;
+        }
+        return urls;
+    }
+
+    var get_stock_data = function() {
+        query_stock_id = $('#stock_id').val();
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+
+        query_dates = get_all_single_dates(query_stock_id, '2015-01-01',yyyy + '-' + mm + '-' + dd);
+        query_index = 0;
+        trigger();
+    }
+
+    var save = function() {
+        var text = JSON.stringify(db),
+            blob = new Blob([text], { type: 'text/plain' }),
+            anchor = document.createElement('a');
+
+        anchor.download = "kdanalyzer.json";
+        anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+        anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+        anchor.click();
+    }
+
+    function read_files(event) {
+        var fileList = event.target.files;
+
+        for(var i=0; i < fileList.length; i++ ) {
+            load_data(fileList[i]);
+        }
+    }
+
+    function load_data(theFile) {
+        var reader = new FileReader();
+
+        reader.onload = function(loadedEvent) {
+            var new_db = JSON.parse(loadedEvent.target.result);
+            for (var key in new_db) {
+                if (db[key] === undefined) {
+                    db[key] = new_db[key];
+                }
+            }
+            gen_db_tbl();
+        }
+        reader.readAsText(theFile);
+    }
+
+    var refresh_line_chart = function(key, days) {
+        var stock = db[key];
+
+        var price_title = stock.name + '(' + key + ')';
+        var price_data = [];
+        var price_labels = [];
+        var k9_data = [];
+        var d9_data = [];
+        var prices = [];
+        var max_price = -1;
+        var K9 = 0;
+        var D9 = 0;
+        for (var i=0 ; i<stock.data.length ; i++) {
+            if (i % days != 0)
+                continue;
+
+            price_labels.push(stock.data[i].date);
+            price_data.push(stock.data[i].price);
+            var today_price = parseFloat(stock.data[i].price);
+            if (max_price < today_price) {
+                max_price = today_price;
+            }
+
+            prices.push(today_price);
+            //https://www.cmoney.tw/notes/note-detail.aspx?nid=16024
+            if (prices.length == 9) {
+                // console.log(prices);
+
+                var min_price = 100000.0;
+                var max_price = 0;
+                for (var j=0 ; j<prices.length ; j++) {
+                    if (min_price > prices[j])
+                        min_price = prices[j];
+                    if (max_price < prices[j])
+                        max_price = prices[j];
+                }
+
+                var RSV = Math.round(((today_price - min_price) / (max_price - min_price)) * 100);
+                K9 = Math.round(K9 * 0.667 + RSV * 0.333);
+                D9 = Math.round(D9 * 0.667 + K9 * 0.333);
+                // console.log('RSV: ' + RSV + ',K9:' + K9 + ',D9: ' + D9);
+                k9_data.push(K9);
+                d9_data.push(D9);
+
+                prices.shift();
+            }
+            else {
+                k9_data.push(0);
+                d9_data.push(0);
+            }
+        }
+        line_chart.data.labels = price_labels;
+        line_chart.data.datasets[0].label = price_title;
+        line_chart.data.datasets[0].data = price_data;
+        line_chart.data.datasets[1].data = k9_data;
+        line_chart.data.datasets[2].data = d9_data;
+
+        line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
+        line_chart.update();
+    }
+
+    var init = function() {
+        $('#db_tbl').DataTable( {
+            data: [],
+            paging:   false,
+            ordering: false,
+            info:     false,
+            searching: false,
+            columns: [
+                {title: "#"},
+                {title: "股票代號"},
+                {title: "股票名稱"},
+                {title: "&nbsp;&nbsp;&nbsp;"},
+                {title: "&nbsp;&nbsp;&nbsp;"},
+                {title: "&nbsp;&nbsp;&nbsp;"}
+            ],
+            columnDefs: [
+               {className: "dt-left", targets: [ 0, 1, 2 ] }
+            ]
+        });
+
+        // $('#db_tbl').on('click', 'tbody tr', function() {
+        //     var data = $('#db_tbl').DataTable().row(this).data();
+        //     console.log('API row values : ', data);
+        // })
+
+        $('#db_tbl tbody').on('click', 'button', function () {
+            var action = this.className;
+            var data = $('#db_tbl').DataTable().row( $(this).parents('tr') ).data();
+
+            if (action == 'delete') {
+                delete db[data[1]];
+                gen_db_tbl();
+            }
+            else if (action == 'analyze') {
+                var days = $('#' + data[1] + '_days').val();
+                refresh_line_chart(data[1], parseInt(days));
+            }
+        });
+
+        var ctx = $('#stock_line_chart');
+        line_chart = new Chart(ctx, line_chart_conf);
+    }
+  </script>
 </html>

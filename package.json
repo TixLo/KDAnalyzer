@@ -1,0 +1,14 @@
+{
+  "name": "KDAnalyzer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "TixLo",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^9.0.3"
+  }
+}
