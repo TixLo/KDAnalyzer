@@ -20,9 +20,27 @@
     <button onclick='save()' id='save_btn' disabled="disabled">儲存資料</button>
     <input type="file" id='load_btn' onchange="read_files(event)"></input>
     <hr>
-    股票代號：<input type='text' id='stock_id' value='2317' size='6'></input>
-    <button onclick='get_stock_data()'>抓取歷史資料 (2015/01/01 - now)</button>
-    <p id='loading'></p>
+    抓取時間區段為 (2015/01/01 - now), 為了防止被 ban, 所以限定抓取速度, 以月為單位, 每 5s 抓一次
+    <table>
+        <tr>
+            <td>
+                股票代號：<input type='text' id='stock_id' value='2317' size='6'></input>
+                <button onclick='get_stock_data()'>抓取歷史資料</button>
+            </td>
+            <td>
+                <div id="fetch_region">
+                <input type='checkbox' class='checkbox' value='30' checked/>一個月
+                <input type='checkbox' class='checkbox' value='60'/>三個月
+                <input type='checkbox' class='checkbox' value='180'/>六個月
+                <input type='checkbox' class='checkbox' value='365'/>一年
+                <input type='checkbox' class='checkbox' value='730'/>三年
+                <input type='checkbox' class='checkbox' value='1095'/>五年
+                </div>
+            </td>
+        </tr>
+    </table>
+    <label id='loading'></label><br>
+    <label id='req_url'></label>
     <hr>
     <div id='db_tbl_area'>
         <table id='db_tbl' class='display' width='100%'></table>
@@ -37,7 +55,9 @@
     var query_dates = [];
     var query_index = 0;
     var query_stock_id = 0;
+    var twse_url = '';
     var db = {};
+    var fetch_region = 7;
     var line_chart;
     var line_chart_data = {
         labels: [],
@@ -143,49 +163,120 @@
         if (query_index < query_dates.length) {
             $('#loading').text('載入資料中 (' + (query_index + 1) + '/'
             + (query_dates.length) + ') ...');
-            setTimeout(trigger_to_get_stock_price, 400);
+            setTimeout(trigger_to_get_stock_price, 5000);
         }
         else {
             $('#loading').text('股票歷史資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');
+            $('#req_url').text('');
             $('#save_btn').attr('disabled', false);
+
+            nestedSort = (prop1, prop2 = null, direction = 'asc') => (e1, e2) => {
+                const a = prop2 ? e1[prop1][prop2] : e1[prop1],
+                    b = prop2 ? e2[prop1][prop2] : e2[prop1],
+                    sortOrder = direction === "asc" ? 1 : -1
+                return (a < b) ? -sortOrder : (a > b) ? sortOrder : 0;
+            }
+            db[query_stock_id].data.sort(nestedSort('date'));
+            console.log(db);
             gen_db_tbl();
         }
     }
 
     var trigger_to_get_stock_price = function() {
         var date_item = query_dates[query_index];
-        var twse_url = 'http://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_';
-        twse_url += query_stock_id + '.tw_' + date_item + '&json=1&delay=0';
-        console.log(twse_url);
+        // twse_url = 'http://mis.twse.com.tw/stock/api/?ex_ch=tse_';
+        // twse_url += query_stock_id + '.tw_' + date_item + '&json=1&delay=0';
+
+        twse_url = 'http://www.twse.com.tw/exchangeReport/STOCK_DAY?date=';
+        twse_url += date_item + '&stockNo=' + query_stock_id;
+
+        $('#req_url').text('Url: ' + twse_url);
+
+        // console.log(twse_url);
         $.get(twse_url, function(result){
-            var obj = JSON.parse(result);
-            //ref: https://sites.google.com/site/kentyeh2000/zheng-jiao-suo-ji-shi-zi-xun-jie-xi
-            if (obj.msgArray.length > 0) {
-                var key = obj.msgArray[0].c;
-                if (db[key] === undefined){
+            //
+            // ref: https://sites.google.com/site/zsgititit/home/python-cheng-shi-she-ji/shi-yongpython-zhua-qu-tai-gu-zheng-jiao-suo-mei-ri-gu-jia-zi-liao-chu-cun-daomongodb
+            //
+            var obj = result;
+            if (obj == undefined || obj.title == undefined) {
+                query_index++;          
+                trigger();
+            }
+            var title = obj.title.split(' ')[2];
+
+            for (var i=0 ; i<obj.data.length ; i++) {
+                var param = obj.data[i][0].split('/');
+                var date = (parseInt(param[0]) + 1911).toString() + param[1] + param[2];
+                var price = obj.data[i][6];
+
+               if (db[query_stock_id] === undefined){
                     var d = {};
                     d.data = [];
-                    d.name = obj.msgArray[0].n;
+                    d.name = title;
 
-                    db[key] = d;
+                    db[query_stock_id] = d;
                 }
 
-                db[key].data.push({
-                    date: date_item,
-                    price: obj.msgArray[0].y
-                });
+                var found = false;
+                for (var j=0 ; j<db[query_stock_id].data.length ; j++) {
+                    if (db[query_stock_id].data[j].date == date) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found == false) {
+                    db[query_stock_id].data.push({
+                        date: date,
+                        price: parseFloat(price)
+                    });
+                }
             }
+            
+            //
+            // ref: https://sites.google.com/site/kentyeh2000/zheng-jiao-suo-ji-shi-zi-xun-jie-xi
+            //
+            // var obj = JSON.parse(result);
+            // if (obj.msgArray.length > 0) {
+            //     var key = obj.msgArray[0].c;
+                // if (db[key] === undefined){
+                //     var d = {};
+                //     d.data = [];
+                //     d.name = obj.msgArray[0].n;
+
+                //     db[key] = d;
+                // }
+
+                // var found = false;
+                // for (var i=0 ; i<db[key].data.length ; i++) {
+                //     if (db[key].data[i].date == date_item) {
+                //         found = true;
+                //         break;
+                //     }
+                // }
+
+                // if (found == false) {
+                //     db[key].data.push({
+                //         date: date_item,
+                //         price: obj.msgArray[0].y
+                //     });
+                // }
+            // }
 
             query_index++;          
             trigger();
-        });
+        }).fail(function() {
+            console.log('failed to get stock price and continue');
+            query_index++;          
+            trigger();
+        });;
     }
 
     Date.prototype.format = function() {
-        var s = '';
         var mouth = (this.getMonth() + 1) >= 10 ? (this.getMonth() + 1) : ('0'+(this.getMonth() + 1));
         var day = this.getDate() >= 10 ? this.getDate() : ('0'+this.getDate());
-        s += this.getFullYear() + mouth + day;
+        var s = this.getFullYear().toString() + mouth + '01';
+        // s += this.getFullYear() + mouth + day;
         return (s);
     };
 
@@ -199,10 +290,25 @@
         var unixDb = db.getTime();
         var unixDe = de.getTime();
         var urls = [];
-        for (var k = unixDb; k <= unixDe;) {
+        for (var k = unixDe; k >= unixDb;) {
             var date_item = (new Date(parseInt(k))).format();
-            urls.push((new Date(parseInt(k))).format());
-            k = k + 24 * 60 * 60 * 1000;
+
+            var found = false;
+            for (var i=0 ; i<urls.length ; i++) {
+                if (urls[i] == date_item) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found == false) {
+                urls.push((new Date(parseInt(k))).format());
+            }
+            k = k - 24 * 60 * 60 * 1000;
+
+            fetch_region--;
+            if (fetch_region <= 0)
+                break;
         }
         return urls;
     }
@@ -214,7 +320,29 @@
         var mm = String(today.getMonth() + 1).padStart(2, '0');
         var yyyy = today.getFullYear();
 
-        query_dates = get_all_single_dates(query_stock_id, '2015-01-01',yyyy + '-' + mm + '-' + dd);
+        var dates = get_all_single_dates(query_stock_id, '2015-01-01',yyyy + '-' + mm + '-' + dd);
+        // console.log(dates);
+        // console.log(db);
+        if (db[query_stock_id] === undefined) {
+            query_dates = dates;
+        }
+        else {
+            query_dates = [];
+            for (var j=0 ; j<dates.length ; j++) {
+                var found = false;
+                for (var i=0 ; i<db[query_stock_id].data.length ; i++) {
+                    if (db[query_stock_id].data[i].date.substring(0, 6) == dates[j].substring(0, 6)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found == false) {
+                    query_dates.push(dates[j]);
+                }
+            }
+        }
+        // console.log(query_dates);
         query_index = 0;
         trigger();
     }
@@ -263,15 +391,32 @@
         var d9_data = [];
         var prices = [];
         var max_price = -1;
+        var min_price = 10000;
         var K9 = 0;
         var D9 = 0;
+        var cache = [];
         for (var i=0 ; i<stock.data.length ; i++) {
-            if (i % days != 0)
+            var today_price = parseFloat(stock.data[i].price);
+            if (i % days != 0) {
+                cache.push(today_price);
                 continue;
+            }
+
+            if (cache.length > 0) {
+                var sum = 0;
+                for (var j=0 ; j<cache.length ; j++) {
+                    sum += cache[j];
+                }
+                today_price = sum / cache.length;
+                // console.log('sum: ' + sum +', today: ' + today_price);
+                cache = [];
+            }
 
             price_labels.push(stock.data[i].date);
             price_data.push(stock.data[i].price);
-            var today_price = parseFloat(stock.data[i].price);
+            if (min_price > today_price) {
+                min_price = today_price;
+            }
             if (max_price < today_price) {
                 max_price = today_price;
             }
@@ -310,6 +455,7 @@
         line_chart.data.datasets[1].data = k9_data;
         line_chart.data.datasets[2].data = d9_data;
 
+        line_chart.options.scales.yAxes[0].ticks.suggestedMin = min_price * 0.8;
         line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
         line_chart.update();
     }
@@ -355,6 +501,14 @@
 
         var ctx = $('#stock_line_chart');
         line_chart = new Chart(ctx, line_chart_conf);
+
+        $('#fetch_region input').click(function(){
+            if($(this).prop('checked')){
+                fetch_region = parseInt($(this).val());
+                $('#fetch_region input:checkbox').prop('checked',false);
+                $(this).prop('checked',true);
+            }
+        });
     }
   </script>
 </html>
