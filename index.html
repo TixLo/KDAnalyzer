@@ -45,6 +45,7 @@
                 <input type='checkbox' class='checkbox' value='365'/>一年
                 <input type='checkbox' class='checkbox' value='1095'/>三年
                 <input type='checkbox' class='checkbox' value='1825'/>五年
+                <input type='checkbox' class='checkbox' value='2555'/>七年
                 </div>
             </td>
         </tr>
@@ -153,7 +154,7 @@
             if (profits[i].end_date == '--') {
                 item.push(profits[i].begin_date + ' - ');
                 item.push(profits[i].begin_price.toFixed(2) + ' - ' + profits[i].end_price.toFixed(2));
-                var kd = '(' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
+                var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
                        + 'KD黃金交叉';
                 item.push(kd);
 
@@ -161,7 +162,10 @@
                 var e_price = parseFloat(profits[i].end_price);
                 var p = ((e_price - b_price) / (b_price)) * 100;
 
-                best_notes = '(' + best_days + ', ' + profits[i].begin_date + ', '
+                var d = profits[i].begin_date.substring(0,4) + '/'
+                      + profits[i].begin_date.substring(4, 6) + '/'
+                      + profits[i].begin_date.substring(6, 8);
+                best_notes = '[' + profits[i].begin_num + '] (' + best_days + ', ' + d + ', '
                               + profits[i].begin_price.toFixed(2) + ', '
                               + profits[i].begin_k9 + ', '
                               + p.toFixed(2) + '%)';
@@ -170,11 +174,11 @@
                 item.push(profits[i].begin_date + ' - ' + profits[i].end_date);
                 item.push(profits[i].begin_price.toFixed(2) + ' - ' + profits[i].end_price.toFixed(2));
                 if (profits[i].end_k9 == 0 && profits[i].end_d9 == 0) {
-                    var kd = '(' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->停損點 (-5%)';
+                    var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->停損點 (-5%)';
                     item.push(kd);
                 }
                 else {
-                    var kd = '(' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
+                    var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
                            + '(' + profits[i].end_k9 + ',' + profits[i].end_d9 + ')';
                     item.push(kd);
                 }
@@ -228,12 +232,14 @@
         profits = [];
         for (var i=0 ; i<stock.data.length ; i++) {
             var today_price = 0;
+            var stock_num = 0;
             if (stock.data[i].price == undefined)
                 today_price = last_price;
             else
                 today_price = parseFloat(stock.data[i].price);
 
             last_price = today_price;
+            stock_num = parseInt(stock.data[i].num);
             if (i % days != 0) {
                 cache.push(today_price);
                 continue;
@@ -289,6 +295,7 @@
                         curr_profit.begin_price = today_price;
                         curr_profit.begin_k9 = K9;
                         curr_profit.begin_d9 = D9;
+                        curr_profit.begin_num = stock_num;
                         curr_profit.end_date = '--';
                         state = 'search_dead_cross';
                     }

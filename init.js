@@ -13,10 +13,10 @@ var init = function() {
             {title: "名稱"},
             {title: "筆數"},
             {title: "名單內"},
-            {title: "平均天數"},
+            {title: "KD天數"},
             {title: "&nbsp;&nbsp;&nbsp;"},
             {title: "&nbsp;&nbsp;&nbsp;"},
-            {title: "(天數, 時間, 買入價格, K9, 目前獲利(%))"}
+            {title: "[張數](天數, 時間, 買入價格, K9, 目前獲利(%))"}
         ],
         columnDefs: [
            {className: "dt-left", targets: [ 0, 1, 2, 3, 4, 8] },
@@ -25,7 +25,7 @@ var init = function() {
            {"width": "96", "targets": 2},
            {"width": "30", "targets": 3},
            {"width": "50", "targets": 4},
-           {"width": "70", "targets": 5},
+           {"width": "50", "targets": 5},
            {"width": "40", "targets": 6},
            {"width": "40", "targets": 7}
         ]
@@ -41,7 +41,7 @@ var init = function() {
             {title: "#"},
             {title: "時間區段"},
             {title: "股價變化"},
-            {title: "(K9,D9)->(K9,D9)"},
+            {title: "[交易張數](K9,D9)->(K9,D9)"},
             {title: "投資效益"}
         ],
         columnDefs: [

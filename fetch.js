@@ -71,6 +71,7 @@ var trigger_to_get_stock_price = function() {
             var param = obj.data[i][0].split('/');
             var date = (parseInt(param[0]) + 1911).toString() + param[1] + param[2];
             var price = obj.data[i][6];
+            var num = parseInt(obj.data[i][1].replace(/,/g,'')) / 1000;
 
            if (db[query_stock_id] === undefined){
                 var d = {};
@@ -91,7 +92,8 @@ var trigger_to_get_stock_price = function() {
             if (found == false) {
                 db[query_stock_id].data.push({
                     date: date,
-                    price: parseFloat(price)
+                    price: parseFloat(price),
+                    num: num
                 });
             }
         }
@@ -156,7 +158,7 @@ var get_stock_data = function() {
     var mm = String(today.getMonth() + 1).padStart(2, '0');
     var yyyy = today.getFullYear();
 
-    var dates = get_all_single_dates(query_stock_id, '2015-01-01',yyyy + '-' + mm + '-' + dd);
+    var dates = get_all_single_dates(query_stock_id, '2010-01-01',yyyy + '-' + mm + '-' + dd);
     // console.log(dates);
     // console.log(db);
     if (db[query_stock_id] === undefined) {
