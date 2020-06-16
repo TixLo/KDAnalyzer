@@ -50,7 +50,7 @@
         </tr>
     </table>
     <label id='loading'></label><br>
-    <label id='req_url'></label>
+    <label id='req_url'>HTTP Req: </label>
     <hr>
     <label>平均天數若為 0, 會自動用 1~7 的平均天數來計算, 並自動挑獲利最大的平均天數</label><br>
     <button onclick='update_stocks()'>更新最新股票資料</button>
@@ -161,7 +161,7 @@
                 var e_price = parseFloat(profits[i].end_price);
                 var p = ((e_price - b_price) / (b_price)) * 100;
 
-                best_notes = '(' + profits[i].begin_date + ', '
+                best_notes = '(' + best_days + ', ' + profits[i].begin_date + ', '
                               + profits[i].begin_price.toFixed(2) + ', '
                               + profits[i].begin_k9 + ', '
                               + p.toFixed(2) + '%)';
@@ -281,7 +281,7 @@
                 // console.log('[' + stock.data[i].date + '] RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
 
                 if (state == 'search_golden_cross') {
-                    if ((k9_data.last() <= d9_data.last()) && (K9 > D9) && (K9 < 20)) {
+                    if ((k9_data.last() <= d9_data.last()) && (K9 > D9) && (K9 < 30)) {
                     // if ((k9_data.last() <= d9_data.last()) && (K9 > D9)) {
                         // console.log('黃金交叉');
                         curr_profit = {};

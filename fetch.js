@@ -1,12 +1,12 @@
 var trigger = function() {
     if (query_index < query_dates.length) {
-        $('#loading').text('載入資料中 (' + (query_index + 1) + '/'
+        $('#loading').text('[' + query_stock_id + ']載入資料中 (' + (query_index + 1) + '/'
         + (query_dates.length) + ') ...');
         setTimeout(trigger_to_get_stock_price, 6000);
     }
     else {
-        $('#loading').text('股票歷史資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');
-        $('#req_url').text('');
+        $('#loading').text('股票資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');
+        $('#req_url').text('HTTP Req: ');
         // $('#save_btn').attr('disabled', false);
 
         nestedSort = (prop1, prop2 = null, direction = 'asc') => (e1, e2) => {
