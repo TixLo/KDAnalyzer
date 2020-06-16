@@ -10,12 +10,22 @@ var init = function() {
             {title: "股票代號"},
             {title: "股票名稱"},
             {title: "資料筆數"},
+            {title: "名單內"},
             {title: "平均天數"},
             {title: "&nbsp;&nbsp;&nbsp;"},
-            {title: "&nbsp;&nbsp;&nbsp;"}
+            {title: "&nbsp;&nbsp;&nbsp;"},
+            {title: "黃金交叉(時間, 價格, K9, 獲利(%))"}
         ],
         columnDefs: [
-           {className: "dt-left", targets: [ 0, 1, 2, 3, 4] }
+           {className: "dt-left", targets: [ 0, 1, 2, 3, 4] },
+           {"width": "10", "targets": 0},
+           {"width": "60", "targets": 1},
+           {"width": "96", "targets": 2},
+           {"width": "64", "targets": 3},
+           {"width": "40", "targets": 4},
+           {"width": "70", "targets": 5},
+           {"width": "40", "targets": 6},
+           {"width": "40", "targets": 7}
         ]
     });
 
@@ -48,8 +58,8 @@ var init = function() {
         else if (action == 'analyze') {
             var days = $('#' + data[1] + '_days').val();
             if (days != '0') {
-                refresh_line_chart(data[1], parseInt(days), true);
                 best_days = parseInt(days);
+                refresh_line_chart(data[1], parseInt(days), true);
             }
             else {
                 var max_profit = -100;
@@ -67,6 +77,14 @@ var init = function() {
             }
         }
     });
+
+    $('#db_tbl tbody').on('click', 'input[type="checkbox"]', function() {
+        var data = $('#db_tbl').DataTable().row( $(this).parents('tr') ).data();
+        if (db[data[1]].buyin == false)
+            db[data[1]].buyin = true;
+        else
+            db[data[1]].buyin = false;
+    });  
 
     var ctx = $('#stock_line_chart');
     line_chart = new Chart(ctx, line_chart_conf);

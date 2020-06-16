@@ -2,12 +2,12 @@ var trigger = function() {
     if (query_index < query_dates.length) {
         $('#loading').text('載入資料中 (' + (query_index + 1) + '/'
         + (query_dates.length) + ') ...');
-        setTimeout(trigger_to_get_stock_price, 5000);
+        setTimeout(trigger_to_get_stock_price, 6000);
     }
     else {
         $('#loading').text('股票歷史資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');
         $('#req_url').text('');
-        $('#save_btn').attr('disabled', false);
+        // $('#save_btn').attr('disabled', false);
 
         nestedSort = (prop1, prop2 = null, direction = 'asc') => (e1, e2) => {
             const a = prop2 ? e1[prop1][prop2] : e1[prop1],
@@ -61,6 +61,12 @@ var trigger_to_get_stock_price = function() {
         }
         var title = obj.title.split(' ')[2];
 
+        // var today_date = new Date();
+        // var dd = String(today_date.getDate()).padStart(2, '0');
+        // var mm = String(today_date.getMonth() + 1).padStart(2, '0');
+        // var yyyy = today_date.getFullYear();
+        // var today = (yyyy - 1911).toString() + mm + dd;
+
         for (var i=0 ; i<obj.data.length ; i++) {
             var param = obj.data[i][0].split('/');
             var date = (parseInt(param[0]) + 1911).toString() + param[1] + param[2];
@@ -81,7 +87,7 @@ var trigger_to_get_stock_price = function() {
                     break;
                 }
             }
-
+            
             if (found == false) {
                 db[query_stock_id].data.push({
                     date: date,
@@ -198,4 +204,21 @@ var update_stocks = function() {
     update_stock_ids.shift();  
 
     trigger();
+}
+
+var analyze_all_stocks = function() {
+    if (Object.keys(db).length == undefined)
+        return;
+
+    for (var key in db) {
+        var max_profit = -100;
+        for (var i=1 ; i<=7 ; i++) {
+            var profit = refresh_line_chart(key, i, false);
+            if (max_profit < profit) {
+                max_profit = profit;
+                best_days = i;
+            }
+        }
+        refresh_line_chart(key, best_days, true);
+    }
 }

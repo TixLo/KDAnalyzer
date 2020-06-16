@@ -12,23 +12,25 @@
     <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
     <style type="text/css">
     div#db_tbl_area {
-        width: 700px;
+        width: 980px;
     }
     div#profit_tbl_area {
-        width: 900px;
+        width: 980px;
         font-size: 14px;
     }
     canvas {
         width:980px !important;
         height:300px !important;
     }
+    th { font-size: 14px; }
+    td { font-size: 14px; }
     </style>
   </head>
   <body onload='init()'>
-    <button onclick='save()' id='save_btn' disabled="disabled">儲存資料</button>
+    <button onclick='save()' id='save_btn'>儲存資料</button>
     <input type="file" id='load_btn' onchange="read_files(event)"></input>
     <hr>
-    抓取時間區段為從現在往前推特定時間, 為了防止被 ban, 所以限定抓取速度, 以月為單位, 每 5s 抓一次
+    抓取時間區段為從現在往前推特定時間, 為了防止被 ban, 所以限定抓取速度, 以月為單位, 每 6s 抓一次
     <table>
         <tr>
             <td>
@@ -52,6 +54,7 @@
     <hr>
     <label>平均天數若為 0, 會自動用 1~7 的平均天數來計算, 並自動挑獲利最大的平均天數</label><br>
     <button onclick='update_stocks()'>更新最新股票資料</button>
+    <button onclick='analyze_all_stocks()'>分析所有股票</button>
     <div id='db_tbl_area'>
         <table id='db_tbl' class='display' width='100%'></table>
     </div>
@@ -70,15 +73,62 @@
         var data_set = [];
 
         var count = 1;
+        // phase 1: find the buyin list
+        var buyin_list = [];
         for (var stock_id in db) {
+            if (db[stock_id].buyin == undefined) {
+                db[stock_id].buyin = false;
+            }
+
+            if (db[stock_id].buyin == true) {
+                buyin_list.push(stock_id);
+            }            
+        }
+
+        // phase 2: list buyin stocks
+        for (var i=0 ; i<buyin_list.length ; i++) {
+            var stock_id = buyin_list[i];
             var item = [];
             item.push(count++);
             item.push(stock_id);
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
+            item.push('<input type="checkbox" class="' + stock_id + '_buyin" checked>');
             item.push('<input type="text" id="' + stock_id + '_days" size="3" value="0">日</input>');
             item.push('<button class="analyze">分析</button>');
             item.push('<button class="delete">刪除</button>');
+            if (db[stock_id].notes == undefined)
+                item.push('<label></label>');
+            else
+                item.push('<label>' + db[stock_id].notes + '</label>');
+            data_set.push(item);
+        }
+
+        // phase 3: list remaining stocks
+        for (var stock_id in db) {
+            var found = false;
+            for (var i=0 ; i<buyin_list.length ; i++) {
+                if (buyin_list[i] == stock_id) {
+                    found = true;
+                }
+            }
+
+            if (found)
+                continue;
+
+            var item = [];
+            item.push(count++);
+            item.push(stock_id);
+            item.push(db[stock_id].name);
+            item.push(db[stock_id].data.length);
+            item.push('<input type="checkbox" class="' + stock_id + '_buyin">');
+            item.push('<input type="text" id="' + stock_id + '_days" size="3" value="0">日</input>');
+            item.push('<button class="analyze">分析</button>');
+            item.push('<button class="delete">刪除</button>');
+            if (db[stock_id].notes == undefined)
+                item.push('<label></label>');
+            else
+                item.push('<label>' + db[stock_id].notes + '</label>');
             data_set.push(item);
         }
 
@@ -87,9 +137,10 @@
         $('#db_tbl').DataTable().draw();
     }
 
-    var gen_profit_tbl = function(update) {
+    var gen_profit_tbl = function(key, update) {
         $('#profit_tbl').DataTable().clear();
         $('#avg_profit').text('');
+        best_notes = '';
         if (profits.length == 0)
             return 0;
 
@@ -105,6 +156,15 @@
                 var kd = '(' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
                        + 'KD黃金交叉';
                 item.push(kd);
+
+                var b_price = parseFloat(profits[i].begin_price);
+                var e_price = parseFloat(profits[i].end_price);
+                var p = ((e_price - b_price) / (b_price)) * 100;
+
+                best_notes = '(' + profits[i].begin_date + ', '
+                              + profits[i].begin_price.toFixed(2) + ', '
+                              + profits[i].begin_k9 + ', '
+                              + p.toFixed(2) + '%)';
             }
             else {
                 item.push(profits[i].begin_date + ' - ' + profits[i].end_date);
@@ -125,7 +185,6 @@
             avg_p += p;
             item.push(p.toFixed(2) + '%');
 
-
             data_set.push(item);
         }
 
@@ -135,6 +194,10 @@
             $('#profit_tbl').DataTable().rows.add(data_set);
             $('#profit_tbl').DataTable().draw();
             $('#avg_profit').text('平均天數[' + best_days + '], 平均投資效益: ' + avg_p.toFixed(2) + '%');
+
+            db[key].notes = best_notes;
+            gen_db_tbl();
+
         }
         return avg_p;
     }
@@ -270,7 +333,7 @@
         }
         // console.log(profits);
 
-        var avg_profit = gen_profit_tbl(update);
+        var avg_profit = gen_profit_tbl(key, update);
 
         if (update) {
             line_chart.data.labels = price_labels;

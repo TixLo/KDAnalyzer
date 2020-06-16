@@ -7,6 +7,7 @@ var db = {};
 var profits = [];
 var fetch_region = 7;
 var best_days = 0;
+var best_notes = '';
 var line_chart;
 var line_chart_data = {
     labels: [],
