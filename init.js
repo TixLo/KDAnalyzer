@@ -5,8 +5,8 @@ var init = function() {
         ordering: true,
         info:     false,
         searching: true,
-        pageLength: 5,
-        lengthMenu: [[5, 10, 20, -1], [5, 10, 20, "All"]],
+        pageLength: 10,
+        lengthMenu: [[10, 15, 20, -1], [10, 15, 20, "All"]],
         columns: [
             {title: "#"},
             {title: "代號"},

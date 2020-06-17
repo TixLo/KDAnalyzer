@@ -221,6 +221,7 @@
         var price_labels = [];
         var k9_data = [];
         var d9_data = [];
+        var k9_threshold = [];
         var prices = [];
         var max_price = -1;
         var min_price = 10000;
@@ -287,7 +288,7 @@
                 // console.log('[' + stock.data[i].date + '] RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
 
                 if (state == 'search_golden_cross') {
-                    if ((k9_data.last() <= d9_data.last()) && (K9 > D9) && (K9 < 30)) {
+                    if ((k9_data.last() <= d9_data.last()) && (K9 > D9) && (K9 < kd_threshold)) {
                     // if ((k9_data.last() <= d9_data.last()) && (K9 > D9)) {
                         // console.log('黃金交叉');
                         curr_profit = {};
@@ -331,6 +332,7 @@
                 k9_data.push(0);
                 d9_data.push(0);
             }
+            k9_threshold.push(kd_threshold);
         }
 
         if (curr_profit.end_date == '--') {
@@ -346,8 +348,9 @@
             line_chart.data.labels = price_labels;
             line_chart.data.datasets[0].label = price_title;
             line_chart.data.datasets[0].data = price_data;
-            line_chart.data.datasets[1].data = k9_data;
-            line_chart.data.datasets[2].data = d9_data;
+            line_chart.data.datasets[1].data = k9_threshold;
+            line_chart.data.datasets[2].data = k9_data;
+            line_chart.data.datasets[3].data = d9_data;
 
             line_chart.options.scales.yAxes[0].ticks.suggestedMin = min_price * 0.8;
             line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
