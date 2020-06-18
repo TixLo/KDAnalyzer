@@ -9,7 +9,7 @@ var fetch_region = 7;
 var best_days = 0;
 var best_notes = '';
 var kd_threshold = 50;
-var kd_strategy = strategy_2;
+var kd_strategy = strategy_4;
 var auto_scan_days = 5;
 var line_chart;
 var line_chart_data = {

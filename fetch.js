@@ -22,7 +22,7 @@ var trigger = function() {
         }
         db[query_stock_id].data.sort(nestedSort('date'));
 
-        console.log(update_stock_ids);
+        // console.log(update_stock_ids);
         if (update_stock_ids.length > 0) {
             var today_date = new Date();
             var mm = String(today_date.getMonth() + 1).padStart(2, '0');

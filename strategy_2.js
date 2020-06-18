@@ -16,6 +16,8 @@ var strategy_2 = function(key, days, update) {
     var price_data = [];
     var price_labels = [];
     var k9_threshold = [];
+    var k9_data = [];
+    var d9_data = [];
     var max_price = -1;
     var min_price = 10000;
     var K9 = 0;
@@ -40,11 +42,10 @@ var strategy_2 = function(key, days, update) {
 
         price_labels.push(stock.data[i].date);
         price_data.push(stock.data[i].price);
-
         stock_num = parseInt(stock.data[i].num);
         if (i % days != 0) {
             cache.push(today_price);
-            if (i != stock.data.length - 1)
+            if (i != stock.data.length - i)
                 continue;
         }
 
@@ -144,7 +145,8 @@ var strategy_2 = function(key, days, update) {
                 }
             }
         }
-
+        k9_data.push(K9);
+        d9_data.push(D9);
         k9_threshold.push(kd_threshold);
     }
 
@@ -172,8 +174,8 @@ var strategy_2 = function(key, days, update) {
         line_chart.data.datasets[0].label = price_title;
         line_chart.data.datasets[0].data = price_data;
         line_chart.data.datasets[1].data = k9_threshold;
-        line_chart.data.datasets[2].data = KD.K9;
-        line_chart.data.datasets[3].data = KD.D9;
+        line_chart.data.datasets[2].data = k9_data;
+        line_chart.data.datasets[3].data = d9_data;
 
         line_chart.options.scales.yAxes[0].ticks.suggestedMin = min_price * 0.8;
         line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
