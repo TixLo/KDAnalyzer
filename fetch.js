@@ -1,7 +1,12 @@
 var trigger = function() {
     if (query_index < query_dates.length) {
-        $('#loading').text('[' + query_stock_id + ']載入資料中 (' + (query_index + 1) + '/'
-        + (query_dates.length) + ') ...');
+        if (update_stock_ids.length == 0) {
+            $('#loading').text('[' + query_stock_id + ']載入資料中 (' + (query_index + 1) + '/'
+                    + (query_dates.length) + ') ...');
+        }
+        else {
+            $('#loading').text('[' + query_stock_id + ']載入資料中, 剩餘 '+ (update_stock_ids.length) + ' 股票要更新');
+        }
         setTimeout(trigger_to_get_stock_price, 6000);
     }
     else {
@@ -214,13 +219,14 @@ var analyze_all_stocks = function() {
 
     for (var key in db) {
         var max_profit = -100;
-        for (var i=1 ; i<=7 ; i++) {
-            var profit = refresh_line_chart(key, i, false);
+        for (var i=1 ; i<=auto_scan_days ; i++) {
+            var profit = kd_strategy(key, i, false);
             if (max_profit < profit) {
                 max_profit = profit;
                 best_days = i;
             }
         }
-        refresh_line_chart(key, best_days, true);
+        kd_strategy(key, best_days, true);
     }
+    $('#loading').text('自動分析完成');
 }

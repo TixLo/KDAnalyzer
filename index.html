@@ -5,21 +5,25 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
-    <script src="vars.js"></script>
     <script src="init.js"></script>
     <script src="file.js"></script>
     <script src="fetch.js"></script>
+    <script src="kd.js"></script>
+    <script src="strategy_1.js"></script>
+    <script src="strategy_2.js"></script>
+    <script src="strategy_3.js"></script>
+    <script src="vars.js"></script>
     <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
     <style type="text/css">
     div#db_tbl_area {
-        width: 980px;
+        width: 1180px;
     }
     div#profit_tbl_area {
-        width: 980px;
+        width: 1180px;
         font-size: 14px;
     }
     canvas {
-        width:980px !important;
+        width:1180px !important;
         height:300px !important;
     }
     th { font-size: 14px; }
@@ -95,6 +99,14 @@
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
             item.push('<input type="checkbox" class="' + stock_id + '_buyin" checked>');
+            if (db[stock_id].win == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].win.toFixed(2) + '%');
+            if (db[stock_id].avg_profit == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].avg_profit.toFixed(2) + '%');
             item.push('<input type="text" id="' + stock_id + '_days" size="3" value="0">日</input>');
             item.push('<button class="analyze">分析</button>');
             item.push('<button class="delete">刪除</button>');
@@ -123,6 +135,14 @@
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
             item.push('<input type="checkbox" class="' + stock_id + '_buyin">');
+            if (db[stock_id].win == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].win.toFixed(2) + '%');
+            if (db[stock_id].avg_profit == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].avg_profit.toFixed(2) + '%');
             item.push('<input type="text" id="' + stock_id + '_days" size="3" value="0">日</input>');
             item.push('<button class="analyze">分析</button>');
             item.push('<button class="delete">刪除</button>');
@@ -142,12 +162,16 @@
         $('#profit_tbl').DataTable().clear();
         $('#avg_profit').text('');
         best_notes = '';
-        if (profits.length == 0)
+        if (profits.length == 0) {
+            $('#profit_tbl').DataTable().clear();
+            $('#profit_tbl').DataTable().draw();
             return 0;
+        }
 
         var data_set = [];
         var count = 1;
         var avg_p = 0;
+        var win = 0;
         for (var i=0 ; i<profits.length ; i++) {
             var item = [];
             item.push(count++);
@@ -186,6 +210,8 @@
             var b_price = parseFloat(profits[i].begin_price);
             var e_price = parseFloat(profits[i].end_price);
             var p = ((e_price - b_price) / (b_price)) * 100;
+            if (p > 1.0)
+                win++;
             avg_p += p;
             item.push(p.toFixed(2) + '%');
 
@@ -194,170 +220,21 @@
 
         avg_p = avg_p / profits.length;
         if (update == true) {
+            // var yoy = Math.pow(avg_p, 1/7);
             $('#profit_tbl').DataTable().clear();
             $('#profit_tbl').DataTable().rows.add(data_set);
             $('#profit_tbl').DataTable().draw();
-            $('#avg_profit').text('平均天數[' + best_days + '], 平均投資效益: ' + avg_p.toFixed(2) + '%');
+            $('#avg_profit').text(db[key].name + '(' + key + ') 平均天數[' + best_days + '], 平均投資效益: ' +
+                                  avg_p.toFixed(2) + '%, 勝率(投資效益 > 1.0%): ' +
+                                  ((win/profits.length) * 100).toFixed(2) + '%');
 
             db[key].notes = best_notes;
+            db[key].win = (win/profits.length) * 100;
+            db[key].avg_profit = avg_p;
             gen_db_tbl();
 
         }
         return avg_p;
-    }
-
-    var refresh_line_chart = function(key, days, update) {
-        if (!Array.prototype.last){
-            Array.prototype.last = function() {
-                return this[this.length - 1];
-            }
-        }
-
-        var stock = db[key];
-
-        var state = 'search_golden_cross';
-        var price_title = stock.name + '(' + key + ')';
-        var price_data = [];
-        var price_labels = [];
-        var k9_data = [];
-        var d9_data = [];
-        var k9_threshold = [];
-        var prices = [];
-        var max_price = -1;
-        var min_price = 10000;
-        var K9 = 0;
-        var D9 = 0;
-        var cache = [];
-        var last_price = 0;
-        var curr_profit = {};
-        profits = [];
-        for (var i=0 ; i<stock.data.length ; i++) {
-            var today_price = 0;
-            var stock_num = 0;
-            if (stock.data[i].price == undefined)
-                today_price = last_price;
-            else
-                today_price = parseFloat(stock.data[i].price);
-
-            last_price = today_price;
-            stock_num = parseInt(stock.data[i].num);
-            if (i % days != 0) {
-                cache.push(today_price);
-                continue;
-            }
-
-            if (cache.length > 0) {
-                var sum = 0;
-                for (var j=0 ; j<cache.length ; j++) {
-                    sum += cache[j];
-                }
-                today_price = sum / cache.length;
-                // console.log('sum: ' + sum +', today: ' + today_price);
-                cache = [];
-            }
-
-            price_labels.push(stock.data[i].date);
-            price_data.push(stock.data[i].price);
-            if (min_price > today_price) {
-                min_price = today_price;
-            }
-            if (max_price < today_price) {
-                max_price = today_price;
-            }
-
-            prices.push(today_price);
-            //https://www.cmoney.tw/notes/note-detail.aspx?nid=16024
-            if (prices.length == 9) {
-                // console.log(prices);
-
-                var min_price = 100000.0;
-                var max_price = 0;
-                for (var j=0 ; j<prices.length ; j++) {
-                    if (min_price > prices[j])
-                        min_price = prices[j];
-                    if (max_price < prices[j])
-                        max_price = prices[j];
-                }
-
-                var RSV = 0;
-                if (max_price > min_price)
-                    RSV = Math.round(((today_price - min_price) / (max_price - min_price)) * 100);
-
-                K9 = Math.round(K9 * 0.667 + RSV * 0.333);
-                D9 = Math.round(D9 * 0.667 + K9 * 0.333);
-                // console.log('[' + stock.data[i].date + '] RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
-
-                if (state == 'search_golden_cross') {
-                    if ((k9_data.last() <= d9_data.last()) && (K9 > D9) && (K9 < kd_threshold)) {
-                    // if ((k9_data.last() <= d9_data.last()) && (K9 > D9)) {
-                        // console.log('黃金交叉');
-                        curr_profit = {};
-                        curr_profit.begin_date = stock.data[i].date;
-                        curr_profit.begin_price = today_price;
-                        curr_profit.begin_k9 = K9;
-                        curr_profit.begin_d9 = D9;
-                        curr_profit.begin_num = stock_num;
-                        curr_profit.end_date = '--';
-                        state = 'search_dead_cross';
-                    }
-                }
-                else if (state == 'search_dead_cross') {
-                    // if ((k9_data.last() > d9_data.last()) && (K9 < D9) && (D9 - K9 > 2)) {
-                    var p = (curr_profit.begin_price - today_price) / curr_profit.begin_price;
-                    if (p > 0 && p > 0.05) {
-                        // console.log('停損點(-5%)');
-                        curr_profit.end_date = stock.data[i].date;
-                        curr_profit.end_price = today_price;
-                        curr_profit.end_k9 = 0;
-                        curr_profit.end_d9 = 0;
-                        profits.push(curr_profit);
-                        state = 'search_golden_cross';
-                    }
-                    else if ((k9_data.last() >= d9_data.last()) && (K9 < D9)) {
-                        // console.log('死亡交叉');
-                        curr_profit.end_date = stock.data[i].date;
-                        curr_profit.end_price = today_price;
-                        curr_profit.end_k9 = K9;
-                        curr_profit.end_d9 = D9;
-                        profits.push(curr_profit);
-                        state = 'search_golden_cross';
-                    }
-                }
-
-                k9_data.push(K9);
-                d9_data.push(D9);
-                prices.shift();
-            }
-            else {
-                k9_data.push(0);
-                d9_data.push(0);
-            }
-            k9_threshold.push(kd_threshold);
-        }
-
-        if (curr_profit.end_date == '--') {
-            // console.log('found a new golden');
-            curr_profit.end_price = today_price;
-            profits.push(curr_profit);
-        }
-        // console.log(profits);
-
-        var avg_profit = gen_profit_tbl(key, update);
-
-        if (update) {
-            line_chart.data.labels = price_labels;
-            line_chart.data.datasets[0].label = price_title;
-            line_chart.data.datasets[0].data = price_data;
-            line_chart.data.datasets[1].data = k9_threshold;
-            line_chart.data.datasets[2].data = k9_data;
-            line_chart.data.datasets[3].data = d9_data;
-
-            line_chart.options.scales.yAxes[0].ticks.suggestedMin = min_price * 0.8;
-            line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
-            line_chart.update();
-        }
-
-        return avg_profit;
     }
 
   </script>

@@ -13,6 +13,8 @@ var init = function() {
             {title: "名稱"},
             {title: "筆數"},
             {title: "名單內"},
+            {title: "勝率(%)"},
+            {title: "效益(%)"},
             {title: "KD天數"},
             {title: "&nbsp;&nbsp;&nbsp;"},
             {title: "&nbsp;&nbsp;&nbsp;"},
@@ -25,9 +27,11 @@ var init = function() {
            {"width": "96", "targets": 2},
            {"width": "30", "targets": 3},
            {"width": "50", "targets": 4},
-           {"width": "50", "targets": 5},
-           {"width": "40", "targets": 6},
-           {"width": "40", "targets": 7}
+           {"width": "55", "targets": 5},
+           {"width": "55", "targets": 6},
+           {"width": "50", "targets": 7},
+           {"width": "40", "targets": 8},
+           {"width": "40", "targets": 9}
         ]
     });
 
@@ -61,12 +65,12 @@ var init = function() {
             var days = $('#' + data[1] + '_days').val();
             if (days != '0') {
                 best_days = parseInt(days);
-                refresh_line_chart(data[1], parseInt(days), true);
+                kd_strategy(data[1], parseInt(days), true);
             }
             else {
                 var max_profit = -100;
-                for (var i=1 ; i<=7 ; i++) {
-                    var profit = refresh_line_chart(data[1], i, false);
+                for (var i=1 ; i<=auto_scan_days ; i++) {
+                    var profit = kd_strategy(data[1], i, false);
                     if (max_profit < profit) {
                         max_profit = profit;
                         best_days = i;
@@ -74,7 +78,7 @@ var init = function() {
                 }
                 // console.log('best_days: ' + best_days);
                 // console.log('max_profit: ' + max_profit);
-                refresh_line_chart(data[1], best_days, true);
+                kd_strategy(data[1], best_days, true);
                 best_days = parseInt(days);
             }
         }
