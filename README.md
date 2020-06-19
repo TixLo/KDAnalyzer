@@ -1,4 +1,6 @@
 # KDAnalyzer
+## Concept
+- 此分析方式並不適用短期操作, 而是基於"相對長期"(數週 or 數月)方針下的分析方式
 ## How to install
 - Install node.js (https://nodejs.org/zh-tw/download/)
 - Clone this project
