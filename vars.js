@@ -11,6 +11,7 @@ var best_notes = '';
 var kd_threshold = 50;
 var kd_strategy = strategy;
 var auto_scan_days = 5;
+var static_cost = 1.0;
 var line_chart;
 var line_chart_data = {
     labels: [],

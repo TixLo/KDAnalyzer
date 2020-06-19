@@ -171,12 +171,16 @@
         if (profits.length == 0) {
             $('#profit_tbl').DataTable().clear();
             $('#profit_tbl').DataTable().draw();
+            db[key].notes = '';
+            db[key].win = 0;
+            db[key].avg_profit = 0;
+            gen_db_tbl();
             return 0;
         }
 
         var data_set = [];
         var count = 1;
-        var avg_p = 0;
+        var avg_p = 1;
         var win = 0;
         for (var i=0 ; i<profits.length ; i++) {
             var item = [];
@@ -192,6 +196,8 @@
                 var e_price = parseFloat(profits[i].end_price);
                 var p = ((e_price - b_price) / (b_price)) * 100;
 
+                p -= static_cost;
+
                 var d = profits[i].begin_date.substring(0,4) + '/'
                       + profits[i].begin_date.substring(4, 6) + '/'
                       + profits[i].begin_date.substring(6, 8);
@@ -203,7 +209,11 @@
             else {
                 item.push(profits[i].begin_date + ' - ' + profits[i].end_date);
                 item.push(profits[i].begin_price.toFixed(2) + ' - ' + profits[i].end_price.toFixed(2));
-                if (profits[i].end_k9 == 0 && profits[i].end_d9 == 0) {
+                if (profits[i].k9_lt_20 != undefined && profits[i].k9_lt_20 >= 3) {
+                    var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->低檔鈍化, 快逃';
+                    item.push(kd);
+                }
+                else if (profits[i].end_k9 == 0 && profits[i].end_d9 == 0) {
                     var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->停損點 (-5%)';
                     item.push(kd);
                 }
@@ -216,7 +226,8 @@
             var b_price = parseFloat(profits[i].begin_price);
             var e_price = parseFloat(profits[i].end_price);
             var p = ((e_price - b_price) / (b_price)) * 100;
-            if (p > 1.0)
+            p -= static_cost;
+            if (p > 0)
                 win++;
             avg_p += p;
             item.push(p.toFixed(2) + '%');
@@ -224,14 +235,15 @@
             data_set.push(item);
         }
 
-        avg_p = avg_p / profits.length;
+        // avg_p = avg_p / profits.length;
         if (update == true) {
             // var yoy = Math.pow(avg_p, 1/7);
+            // console.log('YoY: ' + yoy.toFixed(2));
             $('#profit_tbl').DataTable().clear();
             $('#profit_tbl').DataTable().rows.add(data_set);
             $('#profit_tbl').DataTable().draw();
-            $('#avg_profit').text(db[key].name + '(' + key + ') 平均天數[' + best_days + '], 平均投資效益: ' +
-                                  avg_p.toFixed(2) + '%, 勝率(投資效益 > 1.0%): ' +
+            $('#avg_profit').text(db[key].name + '(' + key + ') 平均天數[' + best_days + '], 總投資損益: ' +
+                                  avg_p.toFixed(2) + '% (每筆交易都會扣除税和時間成本, 粗估1.0%), 勝率: ' +
                                   ((win/profits.length) * 100).toFixed(2) + '%');
 
             db[key].notes = best_notes;
