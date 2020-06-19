@@ -7,7 +7,7 @@ var trigger = function() {
         else {
             $('#loading').text('[' + query_stock_id + ']載入資料中, 剩餘 '+ (update_stock_ids.length) + ' 股票要更新');
         }
-        setTimeout(trigger_to_get_stock_price, 6000);
+        setTimeout(trigger_to_get_stock_price, 5000);
     }
     else {
         $('#loading').text('股票資料載入完成, 共 (' + (query_dates.length) + ') 筆資料');

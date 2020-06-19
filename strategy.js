@@ -1,10 +1,9 @@
-var strategy_4 = function(key, days, update) {
+var strategy = function(key, days, update) {
     if (!Array.prototype.last){
         Array.prototype.last = function() {
             return this[this.length - 1];
         }
     }
-    var KD = calculate_KD(key, 1);
 
     var stock = db[key];
 
@@ -83,6 +82,7 @@ var strategy_4 = function(key, days, update) {
 
             K9 = Math.round(K9 * 0.667 + RSV * 0.333);
             D9 = Math.round(D9 * 0.667 + K9 * 0.333);
+            // console.log('[' + stock.data[i].date + '] RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
 
             var prev_K9 = k9_data.last();
             var prev_D9 = d9_data.last();
@@ -145,7 +145,7 @@ var strategy_4 = function(key, days, update) {
                 else if ((prev_K9 >= prev_D9) && (K9 < D9)) {
                     // console.log('死亡交叉');
                     var good = false;
-                    if (KD.K9[i - 2] >= 80 && KD.K9[i - 1] >= 80 && KD.K9[i] >= 80) {
+                    if (K9 >= 80 && prev_K9 >= 80) {
                         good = true;
                     }
 
@@ -191,6 +191,7 @@ var strategy_4 = function(key, days, update) {
     var avg_profit = gen_profit_tbl(key, update);
 
     if (update) {
+        stock.K9 = K9;
         line_chart.data.labels = price_labels;
         line_chart.data.datasets[0].label = price_title;
         line_chart.data.datasets[0].data = price_data;

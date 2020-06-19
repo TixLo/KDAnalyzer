@@ -12,13 +12,14 @@ var init = function() {
             {title: "代號"},
             {title: "名稱"},
             {title: "筆數"},
-            {title: "名單內"},
+            {title: "&nbsp;"},
+            {title: "K9"},
             {title: "勝率(%)"},
-            {title: "效益(%)"},
+            {title: "損益(%)"},
             {title: "KD天數"},
             {title: "&nbsp;&nbsp;&nbsp;"},
             {title: "&nbsp;&nbsp;&nbsp;"},
-            {title: "[張數](天數, 時間, 買入價格, K9, 目前獲利(%))"}
+            {title: "[張數](天數, 時間, 買入價格, K9, 目前損益(%))"}
         ],
         columnDefs: [
            {className: "dt-left", targets: [ 0, 1, 2, 3, 4, 8] },
@@ -26,12 +27,13 @@ var init = function() {
            {"width": "30", "targets": 1},
            {"width": "96", "targets": 2},
            {"width": "30", "targets": 3},
-           {"width": "50", "targets": 4},
-           {"width": "55", "targets": 5},
+           {"width": "10", "targets": 4},
+           {"width": "10", "targets": 5},
            {"width": "55", "targets": 6},
-           {"width": "50", "targets": 7},
-           {"width": "40", "targets": 8},
-           {"width": "40", "targets": 9}
+           {"width": "55", "targets": 7},
+           {"width": "50", "targets": 8},
+           {"width": "40", "targets": 9},
+           {"width": "40", "targets": 10}
         ]
     });
 

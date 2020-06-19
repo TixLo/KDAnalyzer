@@ -9,10 +9,7 @@
     <script src="file.js"></script>
     <script src="fetch.js"></script>
     <script src="kd.js"></script>
-    <script src="strategy_1.js"></script>
-    <script src="strategy_2.js"></script>
-    <script src="strategy_3.js"></script>
-    <script src="strategy_4.js"></script>
+    <script src="strategy.js"></script>
     <script src="vars.js"></script>
     <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
     <style type="text/css">
@@ -35,7 +32,7 @@
     <button onclick='save()' id='save_btn'>儲存資料</button>
     <input type="file" id='load_btn' onchange="read_files(event)"></input>
     <hr>
-    抓取時間區段為從現在往前推特定時間, 為了防止被 ban, 所以限定抓取速度, 以月為單位, 每 6s 抓一次
+    抓取時間區段為從現在往前推特定時間, 為了防止被 ban, 所以限定抓取速度, 以月為單位, 每 5s 抓一次
     <table>
         <tr>
             <td>
@@ -58,7 +55,7 @@
     <label id='loading'></label><br>
     <label id='req_url'>HTTP Req: </label>
     <hr>
-    <label>平均天數若為 0, 會自動用 1~7 的平均天數來計算, 並自動挑獲利最大的平均天數</label><br>
+    <label>平均天數若為 0, 會自動用 1~5 的平均天數來計算, 並自動挑獲利最大的平均天數</label><br>
     <button onclick='update_stocks()'>更新最新股票資料</button>
     <button onclick='analyze_all_stocks()'>分析所有股票</button>
     <div id='db_tbl_area'>
@@ -100,6 +97,10 @@
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
             item.push('<input type="checkbox" class="' + stock_id + '_buyin" checked>');
+            if (db[stock_id].K9 == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].K9);
             if (db[stock_id].win == undefined)
                 item.push('');
             else
@@ -136,6 +137,10 @@
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
             item.push('<input type="checkbox" class="' + stock_id + '_buyin">');
+            if (db[stock_id].K9 == undefined)
+                item.push('');
+            else
+                item.push(db[stock_id].K9);
             if (db[stock_id].win == undefined)
                 item.push('');
             else
