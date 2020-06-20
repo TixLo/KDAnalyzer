@@ -19,21 +19,21 @@ var init = function() {
             {title: "KD天數"},
             {title: "&nbsp;&nbsp;&nbsp;"},
             {title: "&nbsp;&nbsp;&nbsp;"},
-            {title: "[張數](天數, 時間, 買入價格, K9, 目前損益(%))"}
+            {title: "(天數,時間,買入價格,目前價格,K9,目前損益)"}
         ],
         columnDefs: [
-           {className: "dt-left", targets: [ 0, 1, 2, 3, 4, 8] },
+           {className: "dt-left", targets: [ 0, 1, 2, 3, 4, 8, 11] },
            {"width": "10", "targets": 0},
            {"width": "30", "targets": 1},
-           {"width": "96", "targets": 2},
+           {"width": "76", "targets": 2},
            {"width": "30", "targets": 3},
            {"width": "10", "targets": 4},
            {"width": "10", "targets": 5},
            {"width": "55", "targets": 6},
            {"width": "55", "targets": 7},
            {"width": "50", "targets": 8},
-           {"width": "40", "targets": 9},
-           {"width": "40", "targets": 10}
+           {"width": "35", "targets": 9},
+           {"width": "35", "targets": 10}
         ]
     });
 

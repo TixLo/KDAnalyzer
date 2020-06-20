@@ -25,7 +25,7 @@
         height:300px !important;
     }
     th { font-size: 14px; }
-    td { font-size: 14px; }
+    td { font-size: 13px; }
     </style>
   </head>
   <body onload='init()'>
@@ -55,8 +55,12 @@
     <label id='loading'></label><br>
     <label id='req_url'>HTTP Req: </label>
     <hr>
+    <label>會根據觀察名單內(打勾)的列表, 每 5 min 抓取最新成交金額, 並預測推算最新KD值</label><br>
+    <button id='query_checked_stocks_btn' onclick='query_checked_stocks()'>開始更新即時資料</button>
+    <label id='query_checked_stocks_status'></label>
+    <hr>
     <label>平均天數若為 0, 會自動用 1~5 的平均天數來計算, 並自動挑獲利最大的平均天數</label><br>
-    <button onclick='update_stocks()'>更新最新股票資料</button>
+    <button onclick='update_stocks()'>更新當日最新收盤股票資料</button>
     <button onclick='analyze_all_stocks()'>分析所有股票</button>
     <div id='db_tbl_area'>
         <table id='db_tbl' class='display' width='100%'></table>
@@ -185,7 +189,7 @@
         for (var i=0 ; i<profits.length ; i++) {
             var item = [];
             item.push(count++);
-            if (profits[i].end_date == '--') {
+            if (profits[i].end_date == '--' || profits[i].end_date == 'now!') {
                 item.push(profits[i].begin_date + ' - ');
                 item.push(profits[i].begin_price.toFixed(2) + ' - ' + profits[i].end_price.toFixed(2));
                 var kd = '[' + profits[i].begin_num + '] (' + profits[i].begin_k9 + ',' + profits[i].begin_d9 + ')->'
@@ -196,15 +200,18 @@
                 var e_price = parseFloat(profits[i].end_price);
                 var p = ((e_price - b_price) / (b_price)) * 100;
 
-                p -= static_cost;
-
                 var d = profits[i].begin_date.substring(0,4) + '/'
                       + profits[i].begin_date.substring(4, 6) + '/'
                       + profits[i].begin_date.substring(6, 8);
-                best_notes = '[' + profits[i].begin_num + '] (' + best_days + ', ' + d + ', '
+                best_notes = '(' + best_days + ', ' + d + ', '
                               + profits[i].begin_price.toFixed(2) + ', '
+                              + profits[i].end_price.toFixed(2) + ', '
                               + profits[i].begin_k9 + ', '
                               + p.toFixed(2) + '%)';
+
+                if (profits[i].end_date == 'now!') {
+                    best_notes += ', 死亡交叉!快逃!!';
+                }
             }
             else {
                 item.push(profits[i].begin_date + ' - ' + profits[i].end_date);
@@ -226,10 +233,9 @@
             var b_price = parseFloat(profits[i].begin_price);
             var e_price = parseFloat(profits[i].end_price);
             var p = ((e_price - b_price) / (b_price)) * 100;
-            p -= static_cost;
             if (p > 0)
                 win++;
-            avg_p += p;
+            avg_p += (p - static_cost);
             item.push(p.toFixed(2) + '%');
 
             data_set.push(item);
@@ -247,6 +253,7 @@
                                   ((win/profits.length) * 100).toFixed(2) + '%');
 
             db[key].notes = best_notes;
+            db[key].best_days = best_days;
             db[key].win = (win/profits.length) * 100;
             db[key].avg_profit = avg_p;
             gen_db_tbl();

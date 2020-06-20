@@ -4,6 +4,7 @@ var query_stock_id = 0;
 var update_stock_ids = [];
 var twse_url = '';
 var db = {};
+var realtime_db = {};
 var profits = [];
 var fetch_region = 7;
 var best_days = 0;
@@ -12,6 +13,8 @@ var kd_threshold = 50;
 var kd_strategy = strategy;
 var auto_scan_days = 5;
 var static_cost = 1.0;
+var triger_query_count = 0;
+var triger_query_interval = 0;
 var line_chart;
 var line_chart_data = {
     labels: [],

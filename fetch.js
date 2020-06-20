@@ -213,20 +213,115 @@ var update_stocks = function() {
     trigger();
 }
 
-var analyze_all_stocks = function() {
+var analyze_all_stocks = function(only_checked = false) {
     if (Object.keys(db).length == undefined)
         return;
 
     for (var key in db) {
-        var max_profit = -100;
-        for (var i=1 ; i<=auto_scan_days ; i++) {
-            var profit = kd_strategy(key, i, false);
-            if (max_profit < profit) {
-                max_profit = profit;
-                best_days = i;
+        if (only_checked == true && db[key].buyin == false) {
+            continue;
+        }
+        
+        if (only_checked == false) {
+            var max_profit = -100;
+            for (var i=1 ; i<=auto_scan_days ; i++) {
+                var profit = kd_strategy(key, i, false);
+                if (max_profit < profit) {
+                    max_profit = profit;
+                    best_days = i;
+                }
             }
+        }
+        else {
+            best_days = db[key].best_days;
         }
         kd_strategy(key, best_days, true);
     }
     $('#loading').text('自動分析完成');
+}
+
+var get_realtime_stock_price = function(key) {
+    // console.log(key);
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+
+    var twse_url = 'http://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='
+                 + key + '_' + yyyy.toString() + mm + dd + '&json=1&delay=0';
+    // console.log(twse_url);
+    $.get(twse_url, function(result){
+        var obj = JSON.parse(result);
+
+        // console.log(obj);
+        for (var i=0 ; i<obj.msgArray.length ; i++) {
+            var key = obj.msgArray[i].c;
+            var price = obj.msgArray[i].y;
+            var name = obj.msgArray[i].n;
+            if (realtime_db[key] == undefined) {
+                realtime_db[key] = 0;
+            }
+
+            realtime_db[key] = {price: price, name: name};
+        }
+        // console.log(realtime_db);
+        analyze_all_stocks(true);
+        setTimeout(triger_query, 1000);
+    });
+}
+
+var ccc = 0;
+var triger_query = function() {
+    if (triger_query_interval == 0)
+        return;
+
+    triger_query_count--;
+    if (triger_query_count <= 0) {
+        triger_query_count = triger_query_interval;
+        $('#query_checked_stocks_status').text('開始抓取最新股票資料...');
+        var query_key = '';
+        for (var key in db) {
+            if (db[key].buyin == false)
+                continue;
+            if (query_key.length > 0)
+                query_key += '|';
+            query_key += 'tse_' + key + '.tw';
+        }
+        get_realtime_stock_price(query_key);
+
+        // if (ccc == 0)
+        //     realtime_db['4938'] = {price: 69.1, name: 'ss'};
+        // else if (ccc == 1)
+        //     realtime_db['4938'] = {price: 68.9, name: 'ss'};
+        // else if (ccc == 2)
+        //     realtime_db['4938'] = {price: 68.5, name: 'ss'};
+        // else if (ccc == 3)
+        //     realtime_db['4938'] = {price: 68.3, name: 'ss'};
+        // else if (ccc == 4)
+        //     realtime_db['4938'] = {price: 68.1, name: 'ss'};
+        // else
+        //     realtime_db['4938'] = {price: 67.0, name: 'ss'};
+        // ccc++;
+        // analyze_all_stocks(true);
+        // setTimeout(triger_query, 1000);
+    }
+    else {
+        $('#query_checked_stocks_status').text('預計 ' + triger_query_count + ' 秒之後抓取最新股票資料...');
+        setTimeout(triger_query, 1000);
+    }
+}
+
+var query_checked_stocks = function() {
+    if (triger_query_interval == 0) {
+        triger_query_interval = 5 * 60;
+        triger_query_count = 0;
+        realtime_db = {};
+        $('#query_checked_stocks_btn').text('停止更新即時資料');        
+    }
+    else {
+        triger_query_interval = 0;
+        triger_query_count = 0;
+        $('#query_checked_stocks_btn').text('開始更新即時資料');                
+    }
+    triger_query();
 }

@@ -1,3 +1,4 @@
+var cc = -1;
 var strategy = function(key, days, update) {
     if (!Array.prototype.last){
         Array.prototype.last = function() {
@@ -26,6 +27,48 @@ var strategy = function(key, days, update) {
     }
 
     var stock = db[key];
+    var found_realtime_stock = false;
+    var realtime_stock_price = 0;
+    for (var rt_key in realtime_db) {
+        if (rt_key != key)
+            continue;
+
+        found_realtime_stock = true;
+        realtime_stock_price = parseFloat(realtime_db[rt_key].price);
+        // console.log('realtime_stock_price: ' + realtime_stock_price);
+        stock.data.push({
+                    date: 'now!',
+                    price: realtime_stock_price,
+                    num: 0
+                });
+        break;
+    }
+
+    //----
+
+    // if (cc == 0) {
+    //     realtime_stock_price = 9.8;
+    // }
+    // else if (cc == 1) {
+    //     realtime_stock_price = 9.2;
+    // }
+    // else if (cc == 2) {        
+    //     realtime_stock_price = 9.0;
+    // }
+
+    // if (cc >= 0) {
+    //     found_realtime_stock = true;
+    //     stock.data.push({
+    //         date: 'now!',
+    //         price: realtime_stock_price,
+    //         num: 0
+    //     });
+    //     console.log('realtime_stock_price: ' + realtime_stock_price);
+    // }
+
+    // cc++;
+
+    //----
 
     auto_scan_days = 5;
     kd_threshold = 20;
@@ -58,30 +101,21 @@ var strategy = function(key, days, update) {
         if (today_price == 0)
             continue;
 
-        // if (i % days != 0) {
-        //     cache.push(today_price);
-        //     if (i != stock.data.length - i)
-        //         continue;
-        // }
-        // if (cache.length > 0) {
-        //     var sum = 0;
-        //     for (var j=0 ; j<cache.length ; j++) {
-        //         sum += cache[j];
-        //     }
-        //     today_price = sum / cache.length;
-        //     cache = [];
-        // }
-
-        cache.push(today_price);
-        if (cache.length > days) {
-            cache.shift();
+        if (found_realtime_stock == true && i == stock.data.length - 1) {
+            // console.log('realprice: ' + today_price);
         }
-        if (cache.length > 0) {
-            var sum = 0;
-            for (var j=0 ; j<cache.length ; j++) {
-                sum += cache[j];
+        else {
+            cache.push(today_price);
+            if (cache.length > days) {
+                cache.shift();
             }
-            today_price = sum / cache.length;
+            if (cache.length > 0) {
+                var sum = 0;
+                for (var j=0 ; j<cache.length ; j++) {
+                    sum += cache[j];
+                }
+                today_price = sum / cache.length;
+            }
         }
 
         price_labels.push(stock.data[i].date);
@@ -112,8 +146,10 @@ var strategy = function(key, days, update) {
 
             K9 = Math.round(K9 * 0.667 + RSV * 0.333);
             D9 = Math.round(D9 * 0.667 + K9 * 0.333);
-            // console.log('[' + stock.data[i].date + '] RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
 
+            // if (i > stock.data.length - 4) {
+            //     console.log('[' + stock.data[i].date + '] today_price: ' + today_price + ', RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
+            // }
             var prev_K9 = k9_data.last();
             var prev_D9 = d9_data.last();
 
@@ -154,7 +190,7 @@ var strategy = function(key, days, update) {
                     state = 'search_golden_cross';
                 }
                 else if (dead_cross == false && p > 0 && p > 0.8) {
-                    // console.log('停損點(-5%)');
+                    // console.log('停損點(-8%)');
                     curr_profit.end_date = stock.data[i].date;
                     curr_profit.end_price = (curr_profit.begin_price) * 0.92;
                     curr_profit.end_k9 = 0;
@@ -172,12 +208,8 @@ var strategy = function(key, days, update) {
                     state = 'search_golden_cross';
                 }
                 else if (dead_cross) {
-                    var good = false;
-                    // if (K9 >= 80 && prev_K9 >= 80) {
-                    //     good = true;
-                    // }
-
-                    if (good == false) {
+                    // console.log('死亡交叉 : ' + stock.data[i].date);
+                    if (stock.data[i].date != 'now!') {
                         curr_profit.end_date = stock.data[i].date;
                         curr_profit.end_price = today_price;
                         curr_profit.end_k9 = K9;
@@ -187,8 +219,13 @@ var strategy = function(key, days, update) {
                         curr_profit = {};
                         state = 'search_golden_cross';
                     }
+                    else {
+                        console.log('發現賣點！快逃！');
+                        curr_profit.end_date = stock.data[i].date;
+                    }
                 }
             }
+
             k9_data.push(K9);
             d9_data.push(D9);
             prices.shift();
@@ -200,8 +237,7 @@ var strategy = function(key, days, update) {
         k9_threshold.push(kd_threshold);
     }
 
-    if (curr_profit.end_date == '--') {
-        // console.log('found a new golden');
+    if (curr_profit.end_date == '--' || curr_profit.end_date == 'now!') {
         curr_profit.end_price = today_price;
         profits.push(curr_profit);
     }
@@ -209,6 +245,9 @@ var strategy = function(key, days, update) {
     // console.log(profits);
 
     var avg_profit = gen_profit_tbl(key, update);
+    if (found_realtime_stock) {
+        stock.data.pop();
+    }
 
     if (update) {
         stock.K9 = K9;
