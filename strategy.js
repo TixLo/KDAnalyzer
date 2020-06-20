@@ -1,4 +1,3 @@
-var cc = -1;
 var strategy = function(key, days, update) {
     if (!Array.prototype.last){
         Array.prototype.last = function() {
@@ -44,32 +43,6 @@ var strategy = function(key, days, update) {
         break;
     }
 
-    //----
-
-    // if (cc == 0) {
-    //     realtime_stock_price = 9.8;
-    // }
-    // else if (cc == 1) {
-    //     realtime_stock_price = 9.2;
-    // }
-    // else if (cc == 2) {        
-    //     realtime_stock_price = 9.0;
-    // }
-
-    // if (cc >= 0) {
-    //     found_realtime_stock = true;
-    //     stock.data.push({
-    //         date: 'now!',
-    //         price: realtime_stock_price,
-    //         num: 0
-    //     });
-    //     console.log('realtime_stock_price: ' + realtime_stock_price);
-    // }
-
-    // cc++;
-
-    //----
-
     auto_scan_days = 5;
     kd_threshold = 20;
 
@@ -89,7 +62,7 @@ var strategy = function(key, days, update) {
     var last_price = 0;
     var curr_profit = {};
     profits = [];
-    for (var i=0 ; i<stock.data.length ; i++) {
+    for (var i=0 ; i<stock.data.length; i++) {
         var today_price = 0;
         var stock_num = 0;
         if (stock.data[i].price == undefined)
@@ -101,21 +74,16 @@ var strategy = function(key, days, update) {
         if (today_price == 0)
             continue;
 
-        if (found_realtime_stock == true && i == stock.data.length - 1) {
-            // console.log('realprice: ' + today_price);
+        cache.push(today_price);
+        if (cache.length > days) {
+            cache.shift();
         }
-        else {
-            cache.push(today_price);
-            if (cache.length > days) {
-                cache.shift();
+        if (cache.length > 0) {
+            var sum = 0;
+            for (var j=0 ; j<cache.length ; j++) {
+                sum += cache[j];
             }
-            if (cache.length > 0) {
-                var sum = 0;
-                for (var j=0 ; j<cache.length ; j++) {
-                    sum += cache[j];
-                }
-                today_price = sum / cache.length;
-            }
+            today_price = sum / cache.length;
         }
 
         price_labels.push(stock.data[i].date);
@@ -148,7 +116,7 @@ var strategy = function(key, days, update) {
             D9 = Math.round(D9 * 0.667 + K9 * 0.333);
 
             // if (i > stock.data.length - 4) {
-            //     console.log('[' + stock.data[i].date + '] today_price: ' + today_price + ', RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
+                // console.log('[' + stock.data[i].date + '] today_price: ' + today_price + ', RSV: ' + RSV + ',K9: ' + K9 + ',D9: ' + D9 + ',k9.last(): ' + k9_data.last() + ',d9.last(): ' + d9_data.last());
             // }
             var prev_K9 = k9_data.last();
             var prev_D9 = d9_data.last();
@@ -176,7 +144,6 @@ var strategy = function(key, days, update) {
 
                 var dead_cross = false;
                 if ((prev_K9 >= prev_D9) && (K9 < D9)) {
-                    // console.log('死亡交叉');
                     dead_cross = true;
                 }
                 var p = (curr_profit.begin_price - today_price) / curr_profit.begin_price;
@@ -208,8 +175,12 @@ var strategy = function(key, days, update) {
                     state = 'search_golden_cross';
                 }
                 else if (dead_cross) {
-                    // console.log('死亡交叉 : ' + stock.data[i].date);
-                    if (stock.data[i].date != 'now!') {
+                    // console.log('死亡交叉: ' + stock.data[i].date);;
+                    if (stock.data[i].date == 'now!') {
+                        curr_profit.end_date = stock.data[i].date;
+                        curr_profit.end_price = realtime_stock_price;
+                    }
+                    else {
                         curr_profit.end_date = stock.data[i].date;
                         curr_profit.end_price = today_price;
                         curr_profit.end_k9 = K9;
@@ -218,10 +189,6 @@ var strategy = function(key, days, update) {
 
                         curr_profit = {};
                         state = 'search_golden_cross';
-                    }
-                    else {
-                        console.log('發現賣點！快逃！');
-                        curr_profit.end_date = stock.data[i].date;
                     }
                 }
             }
@@ -241,7 +208,6 @@ var strategy = function(key, days, update) {
         curr_profit.end_price = today_price;
         profits.push(curr_profit);
     }
-
     // console.log(profits);
 
     var avg_profit = gen_profit_tbl(key, update);

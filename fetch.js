@@ -290,17 +290,21 @@ var triger_query = function() {
         get_realtime_stock_price(query_key);
 
         // if (ccc == 0)
-        //     realtime_db['4938'] = {price: 69.1, name: 'ss'};
+        //     realtime_db['2344'] = {price: 13.3, name: 'ss'};
         // else if (ccc == 1)
-        //     realtime_db['4938'] = {price: 68.9, name: 'ss'};
+        //     realtime_db['2344'] = {price: 13.1, name: 'ss'};
         // else if (ccc == 2)
-        //     realtime_db['4938'] = {price: 68.5, name: 'ss'};
+        //     realtime_db['2344'] = {price: 12.9, name: 'ss'};
         // else if (ccc == 3)
-        //     realtime_db['4938'] = {price: 68.3, name: 'ss'};
+        //     realtime_db['2344'] = {price: 12.7, name: 'ss'};
         // else if (ccc == 4)
-        //     realtime_db['4938'] = {price: 68.1, name: 'ss'};
-        // else
-        //     realtime_db['4938'] = {price: 67.0, name: 'ss'};
+        //     realtime_db['2344'] = {price: 12.5, name: 'ss'};
+        // else if (ccc == 5)
+        //     realtime_db['2344'] = {price: 12.3, name: 'ss'};
+        // else if (ccc == 6)
+        //     realtime_db['2344'] = {price: 12.1, name: 'ss'};
+        // else if (ccc == 7)
+        //     realtime_db['2344'] = {price: 12.0, name: 'ss'};
         // ccc++;
         // analyze_all_stocks(true);
         // setTimeout(triger_query, 1000);
@@ -313,7 +317,7 @@ var triger_query = function() {
 
 var query_checked_stocks = function() {
     if (triger_query_interval == 0) {
-        triger_query_interval = 5 * 60;
+        triger_query_interval = 5;
         triger_query_count = 0;
         realtime_db = {};
         $('#query_checked_stocks_btn').text('停止更新即時資料');        
