@@ -15,6 +15,8 @@ var auto_scan_days = 5;
 var static_cost = 1.0;
 var triger_query_count = 0;
 var triger_query_interval = 0;
+var latest_stock_date = '';
+var latest_stock_price = '';
 var line_chart;
 var line_chart_data = {
     labels: [],

@@ -55,7 +55,7 @@
     <label id='loading'></label><br>
     <label id='req_url'>HTTP Req: </label>
     <hr>
-    <label>會根據觀察名單內(打勾)的列表, 每 5 min 抓取最新成交金額, 並預測推算最新KD值</label><br>
+    <label>會根據觀察名單內(打勾)的列表, 每 15 秒抓取最新成交金額, 並預測推算最新KD值</label><br>
     <button id='query_checked_stocks_btn' onclick='query_checked_stocks()'>開始更新即時資料</button>
     <label id='query_checked_stocks_status'></label>
     <hr>
@@ -243,6 +243,16 @@
 
         // avg_p = avg_p / profits.length;
         if (update == true) {
+            if (best_notes == '' && latest_stock_date == 'now!') {
+                var today_date = new Date();
+                var hr = today_date.getHours();
+                var min = today_date.getMinutes();
+                var sec = today_date.getSeconds();
+                best_notes = '[' + hr.toString() + ':' + min.toString() + ':' + sec.toString() +']'
+                           +'目前股價: ';
+                if (latest_stock_price > 0)
+                    best_notes += latest_stock_price.toFixed(2);
+            }
             // var yoy = Math.pow(avg_p, 1/7);
             // console.log('YoY: ' + yoy.toFixed(2));
             $('#profit_tbl').DataTable().clear();

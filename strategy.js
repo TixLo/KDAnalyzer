@@ -33,13 +33,21 @@ var strategy = function(key, days, update) {
             continue;
 
         found_realtime_stock = true;
-        realtime_stock_price = parseFloat(realtime_db[rt_key].price);
-        // console.log('realtime_stock_price: ' + realtime_stock_price);
+        if (realtime_db[rt_key].price == '-') {
+            if (db[key].z == undefined || db[key].z == '-')
+                realtime_stock_price = -1;
+            else
+                realtime_stock_price = db[key].z;
+        }
+        else {
+            realtime_stock_price = parseFloat(realtime_db[rt_key].price);
+        }
         stock.data.push({
                     date: 'now!',
                     price: realtime_stock_price,
                     num: 0
                 });
+        db[key].z = realtime_stock_price;
         break;
     }
 
@@ -62,6 +70,8 @@ var strategy = function(key, days, update) {
     var last_price = 0;
     var curr_profit = {};
     profits = [];
+    latest_stock_date = '';
+    latest_stock_price = 0;
     for (var i=0 ; i<stock.data.length; i++) {
         var today_price = 0;
         var stock_num = 0;
@@ -121,6 +131,10 @@ var strategy = function(key, days, update) {
             var prev_K9 = k9_data.last();
             var prev_D9 = d9_data.last();
 
+            if (i == stock.data.length - 1 && found_realtime_stock == true) {
+                latest_stock_date = stock.data[i].date;
+                latest_stock_price = realtime_stock_price;
+            }
             if (state == 'search_golden_cross') {
                 if ((prev_K9 <= prev_D9) && (K9 > D9) && (K9 < kd_threshold)) {
                     // console.log('黃金交叉: ' + stock.data[i].date);
