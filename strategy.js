@@ -28,6 +28,7 @@ var strategy = function(key, days, update) {
     var stock = db[key];
     var found_realtime_stock = false;
     var realtime_stock_price = 0;
+    yesterday_stock_price = 0;
     for (var rt_key in realtime_db) {
         if (rt_key != key)
             continue;
@@ -42,6 +43,7 @@ var strategy = function(key, days, update) {
         else {
             realtime_stock_price = parseFloat(realtime_db[rt_key].price);
         }
+        yesterday_stock_price = parseFloat(realtime_db[rt_key].yesterday_price);
         stock.data.push({
                     date: 'now!',
                     price: realtime_stock_price,

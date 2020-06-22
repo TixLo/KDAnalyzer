@@ -256,12 +256,13 @@ var get_realtime_stock_price = function(key) {
         for (var i=0 ; i<obj.msgArray.length ; i++) {
             var key = obj.msgArray[i].c;
             var price = obj.msgArray[i].z;
+            var yesterday_price = obj.msgArray[i].y;
             var name = obj.msgArray[i].n;
             if (realtime_db[key] == undefined) {
                 realtime_db[key] = 0;
             }
 
-            realtime_db[key] = {price: price, name: name};
+            realtime_db[key] = {price: price, name: name, yesterday_price: yesterday_price};
         }
         // console.log(realtime_db);
         analyze_all_stocks(true);
@@ -316,7 +317,7 @@ var triger_query = function() {
 
 var query_checked_stocks = function() {
     if (triger_query_interval == 0) {
-        triger_query_interval = 15;
+        triger_query_interval = 20;
         triger_query_count = 0;
         realtime_db = {};
         $('#query_checked_stocks_btn').text('停止更新即時資料');        

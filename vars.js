@@ -1,3 +1,6 @@
+var save_stock_list = [
+    2883, 2891, 2892, 6496, 4104, 5443, 6189
+];
 var query_dates = [];
 var query_index = 0;
 var query_stock_id = 0;
@@ -17,6 +20,7 @@ var triger_query_count = 0;
 var triger_query_interval = 0;
 var latest_stock_date = '';
 var latest_stock_price = '';
+var yesterday_stock_price = '';
 var line_chart;
 var line_chart_data = {
     labels: [],

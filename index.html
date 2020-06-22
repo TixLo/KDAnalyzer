@@ -14,14 +14,14 @@
     <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
     <style type="text/css">
     div#db_tbl_area {
-        width: 1180px;
+        width: 1280px;
     }
     div#profit_tbl_area {
-        width: 1180px;
+        width: 1280px;
         font-size: 14px;
     }
     canvas {
-        width:1180px !important;
+        width:1280px !important;
         height:300px !important;
     }
     th { font-size: 14px; }
@@ -55,7 +55,7 @@
     <label id='loading'></label><br>
     <label id='req_url'>HTTP Req: </label>
     <hr>
-    <label>會根據觀察名單內(打勾)的列表, 每 15 秒抓取最新成交金額, 並預測推算最新KD值</label><br>
+    <label>會根據觀察名單內(打勾)的列表, 每 20 秒抓取最新成交金額, 並預測推算最新KD值</label><br>
     <button id='query_checked_stocks_btn' onclick='query_checked_stocks()'>開始更新即時資料</button>
     <label id='query_checked_stocks_status'></label>
     <hr>
@@ -86,10 +86,9 @@
             if (db[stock_id].buyin == undefined) {
                 db[stock_id].buyin = false;
             }
-
             if (db[stock_id].buyin == true) {
                 buyin_list.push(stock_id);
-            }            
+            }
         }
 
         // phase 2: list buyin stocks
@@ -100,6 +99,18 @@
             item.push(stock_id);
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
+            var save_stock = false;
+            for (var k=0 ; k<save_stock_list.length ; k++) {
+                if (stock_id == save_stock_list[k]) {
+                    save_stock = true;
+                    break;
+                }
+            }
+            if (save_stock == true)
+                item.push('V');
+            else
+                item.push('');
+            
             item.push('<input type="checkbox" class="' + stock_id + '_buyin" checked>');
             if (db[stock_id].K9 == undefined)
                 item.push('');
@@ -140,6 +151,18 @@
             item.push(stock_id);
             item.push(db[stock_id].name);
             item.push(db[stock_id].data.length);
+            var save_stock = false;
+            for (var k=0 ; k<save_stock_list.length ; k++) {
+                if (stock_id == save_stock_list[k]) {
+                    save_stock = true;
+                    break;
+                }
+            }
+            if (save_stock == true)
+                item.push('V');
+            else
+                item.push('');
+
             item.push('<input type="checkbox" class="' + stock_id + '_buyin">');
             if (db[stock_id].K9 == undefined)
                 item.push('');
@@ -245,13 +268,16 @@
         if (update == true) {
             if (best_notes == '' && latest_stock_date == 'now!') {
                 var today_date = new Date();
-                var hr = today_date.getHours();
-                var min = today_date.getMinutes();
-                var sec = today_date.getSeconds();
-                best_notes = '[' + hr.toString() + ':' + min.toString() + ':' + sec.toString() +']'
+                var hr = today_date.getHours() >= 10 ? today_date.getHours() : ('0'+today_date.getHours());
+                var min = today_date.getMinutes() >= 10 ? today_date.getMinutes() : ('0'+today_date.getMinutes());
+                var sec = today_date.getSeconds() >= 10 ? today_date.getSeconds() : ('0'+today_date.getSeconds());
+                best_notes = '[' + hr.toString() + ':' + min.toString() + ':' + sec.toString() +'] '
                            +'目前股價: ';
-                if (latest_stock_price > 0)
+                if (latest_stock_price > 0) {
                     best_notes += latest_stock_price.toFixed(2);
+                    var result = (latest_stock_price - yesterday_stock_price) * 100 / yesterday_stock_price;
+                    best_notes += ' (' + result.toFixed(2) + '%)';
+                }
             }
             // var yoy = Math.pow(avg_p, 1/7);
             // console.log('YoY: ' + yoy.toFixed(2));

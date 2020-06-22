@@ -12,6 +12,7 @@ var init = function() {
             {title: "代號"},
             {title: "名稱"},
             {title: "筆數"},
+            {title: "$"},
             {title: "&nbsp;"},
             {title: "K9"},
             {title: "勝率(%)"},
@@ -29,11 +30,12 @@ var init = function() {
            {"width": "30", "targets": 3},
            {"width": "10", "targets": 4},
            {"width": "10", "targets": 5},
-           {"width": "55", "targets": 6},
+           {"width": "10", "targets": 6},
            {"width": "55", "targets": 7},
-           {"width": "50", "targets": 8},
-           {"width": "35", "targets": 9},
-           {"width": "35", "targets": 10}
+           {"width": "55", "targets": 8},
+           {"width": "50", "targets": 9},
+           {"width": "35", "targets": 10},
+           {"width": "35", "targets": 11}
         ]
     });
 
