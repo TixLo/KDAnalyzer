@@ -34,6 +34,7 @@ var strategy = function(key, days, update) {
             continue;
 
         found_realtime_stock = true;
+        yesterday_stock_price = parseFloat(realtime_db[rt_key].yesterday_price);
         if (realtime_db[rt_key].price == '-') {
             if (db[key].z == undefined || db[key].z == '-')
                 realtime_stock_price = -1;
@@ -43,7 +44,6 @@ var strategy = function(key, days, update) {
         else {
             realtime_stock_price = parseFloat(realtime_db[rt_key].price);
         }
-        yesterday_stock_price = parseFloat(realtime_db[rt_key].yesterday_price);
         stock.data.push({
                     date: 'now!',
                     price: realtime_stock_price,
@@ -53,8 +53,19 @@ var strategy = function(key, days, update) {
         break;
     }
 
+    var manually_price = $('#manually_price').val();
+    if (manually_price.length > 0) {
+        found_realtime_stock = true;
+        realtime_stock_price = parseFloat(manually_price);
+        stock.data.push({
+                    date: 'now!',
+                    price: realtime_stock_price,
+                    num: 0
+                });
+    }
+
     auto_scan_days = 5;
-    kd_threshold = 20;
+    kd_threshold = 30;
 
     var state = 'search_golden_cross';
     var price_title = stock.name + '(' + key + ')';
@@ -191,7 +202,7 @@ var strategy = function(key, days, update) {
                     state = 'search_golden_cross';
                 }
                 else if (dead_cross) {
-                    // console.log('死亡交叉: ' + stock.data[i].date);;
+                    // console.log('死亡交叉: ' + stock.data[i].date);
                     if (stock.data[i].date == 'now!') {
                         curr_profit.end_date = stock.data[i].date;
                         curr_profit.end_price = realtime_stock_price;
@@ -221,7 +232,13 @@ var strategy = function(key, days, update) {
     }
 
     if (curr_profit.end_date == '--' || curr_profit.end_date == 'now!') {
-        curr_profit.end_price = today_price;
+        if (curr_profit.begin_date == 'now!')
+            curr_profit.begin_price = realtime_stock_price;
+        
+        if (curr_profit.end_date == '--')
+            curr_profit.end_price = today_price;
+        else
+            curr_profit.end_price = realtime_stock_price;
         profits.push(curr_profit);
     }
     // console.log(profits);

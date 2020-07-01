@@ -250,24 +250,29 @@ var get_realtime_stock_price = function(key) {
     var twse_url = 'http://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='
                  + key + '_' + yyyy.toString() + mm + dd + '&json=1&delay=0';
     // console.log(twse_url);
-    $.get(twse_url, function(result){
-        var obj = JSON.parse(result);
+    try {
+        $.get(twse_url, function(result){
+            var obj = JSON.parse(result);
 
-        for (var i=0 ; i<obj.msgArray.length ; i++) {
-            var key = obj.msgArray[i].c;
-            var price = obj.msgArray[i].z;
-            var yesterday_price = obj.msgArray[i].y;
-            var name = obj.msgArray[i].n;
-            if (realtime_db[key] == undefined) {
-                realtime_db[key] = 0;
+            for (var i=0 ; i<obj.msgArray.length ; i++) {
+                var key = obj.msgArray[i].c;
+                var price = obj.msgArray[i].z;
+                var yesterday_price = obj.msgArray[i].y;
+                var name = obj.msgArray[i].n;
+                if (realtime_db[key] == undefined) {
+                    realtime_db[key] = 0;
+                }
+
+                realtime_db[key] = {price: price, name: name, yesterday_price: yesterday_price};
             }
-
-            realtime_db[key] = {price: price, name: name, yesterday_price: yesterday_price};
-        }
-        // console.log(realtime_db);
-        analyze_all_stocks(true);
-        setTimeout(triger_query, 1000);
-    });
+            // console.log(realtime_db);
+            analyze_all_stocks(true);
+            setTimeout(triger_query, 1000);
+        });
+    }
+    catch (e) {
+        console.log('http error!!');
+    }
 }
 
 var ccc = 0;

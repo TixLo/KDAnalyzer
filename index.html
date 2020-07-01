@@ -55,7 +55,8 @@
     <label id='loading'></label><br>
     <label id='req_url'>HTTP Req: </label>
     <hr>
-    <label>會根據觀察名單內(打勾)的列表, 每 20 秒抓取最新成交金額, 並預測推算最新KD值</label><br>
+    手動輸入價格：<input type='text' id='manually_price' value='' size='6'></input><br>
+    <label>會根據觀察名單內(打勾)的列表, 每 60 秒抓取最新成交金額, 並預測推算最新KD值</label><br>
     <button id='query_checked_stocks_btn' onclick='query_checked_stocks()'>開始更新即時資料</button>
     <label id='query_checked_stocks_status'></label>
     <hr>
@@ -223,9 +224,15 @@
                 var e_price = parseFloat(profits[i].end_price);
                 var p = ((e_price - b_price) / (b_price)) * 100;
 
-                var d = profits[i].begin_date.substring(0,4) + '/'
+                var d = '';
+                if (profits[i].begin_date != 'now!') {
+                    d = profits[i].begin_date.substring(0,4) + '/'
                       + profits[i].begin_date.substring(4, 6) + '/'
                       + profits[i].begin_date.substring(6, 8);
+                }
+                else {
+                    d = 'today';
+                }
                 best_notes = '(' + best_days + ', ' + d + ', '
                               + profits[i].begin_price.toFixed(2) + ', '
                               + profits[i].end_price.toFixed(2) + ', '
