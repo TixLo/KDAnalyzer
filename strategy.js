@@ -58,7 +58,8 @@ var strategy = function(key, days, update) {
         found_realtime_stock = true;
         realtime_stock_price = parseFloat(manually_price);
         stock.data.push({
-                    date: 'now!',
+                    date: '--',
+                    // date: 'now!',
                     price: realtime_stock_price,
                     num: 0
                 });
