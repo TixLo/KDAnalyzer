@@ -250,6 +250,14 @@ var strategy = function(key, days, update) {
     }
 
     if (update) {
+        var kd_days = $('#kd_days').val();
+        if (kd_days > 0) {
+            price_labels = price_labels.slice(price_labels.length - kd_days);
+            price_data = price_data.slice(price_data.length - kd_days);
+            k9_data = k9_data.slice(k9_data.length - kd_days);
+            d9_data = d9_data.slice(d9_data.length - kd_days);
+        }
+
         stock.K9 = K9;
         line_chart.data.labels = price_labels;
         line_chart.data.datasets[0].label = price_title;
@@ -257,7 +265,7 @@ var strategy = function(key, days, update) {
         line_chart.data.datasets[1].data = k9_threshold;
         line_chart.data.datasets[2].data = k9_data;
         line_chart.data.datasets[3].data = d9_data;
-
+    
         line_chart.options.scales.yAxes[0].ticks.suggestedMin = min_price * 0.8;
         line_chart.options.scales.yAxes[0].ticks.suggestedMax = max_price * 1.05;
         line_chart.update();
